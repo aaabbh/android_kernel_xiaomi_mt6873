@@ -382,8 +382,7 @@ static int bpf_obj_name_cpy(char *dst, const char *src)
 
 	return 0;
 }
-#define BPF_MAP_CREATE_LAST_FIELD map_extra
-
+#define BPF_MAP_CREATE_LAST_FIELD map_name
 /* called via syscall */
 static int map_create(union bpf_attr *attr)
 {
