@@ -377,9 +377,14 @@ static int bpf_obj_name_cpy(char *dst, const char *src)
 	if (src == end)
 		return -EINVAL;
 
+	/* '\0' terminates dst */
+	*dst = 0;
+
 	return 0;
 }
-#define BPF_MAP_CREATE_LAST_FIELD map_name
+
+#define BPF_MAP_CREATE_LAST_FIELD numa_node
+
 /* called via syscall */
 static int map_create(union bpf_attr *attr)
 {
@@ -1170,7 +1175,7 @@ static int bpf_prog_attach_check_attach_type(const struct bpf_prog *prog,
 }
 
 /* last field in 'union bpf_attr' used by this command */
-#define BPF_PROG_LOAD_LAST_FIELD prog_name
+#define	BPF_PROG_LOAD_LAST_FIELD prog_name
 
 static int bpf_prog_load(union bpf_attr *attr)
 {
@@ -1682,16 +1687,15 @@ static int bpf_prog_get_info_by_fd(struct bpf_prog *prog,
 	ulen = info.nr_map_ids;
 	info.nr_map_ids = prog->aux->used_map_cnt;
 	ulen = min_t(u32, info.nr_map_ids, ulen);
-	if (ulen) {
+    if (ulen) {
+    u32 __user *user_map_ids = u64_to_user_ptr(info.map_ids);
+    u32 i;
 
-		u32 __user *user_map_ids = u64_to_user_ptr(info.map_ids);
-		u32 i;
-
-		for (i = 0; i < ulen; i++)
-			if (put_user(prog->aux->used_maps[i]->id,
-				     &user_map_ids[i]))
-				return -EFAULT;
-	}
+    for (i = 0; i < ulen; i++)
+        if (put_user(prog->aux->used_maps[i]->id,
+                &user_map_ids[i]))
+            return -EFAULT;
+    }
 
 	if (!capable(CAP_SYS_ADMIN)) {
 		info.jited_prog_len = 0;
