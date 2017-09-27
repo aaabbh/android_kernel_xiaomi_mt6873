@@ -226,7 +226,6 @@ enum bpf_attach_type {
 
 /* flags for BPF_PROG_QUERY */
 #define BPF_F_QUERY_EFFECTIVE	(1U << 0)
-
 #define BPF_OBJ_NAME_LEN 16U
 
 /* Flags for accessing BPF object */
@@ -996,6 +995,25 @@ enum sk_action {
 	SK_PASS,
 };
 
+#define BPF_TAG_SIZE	8
+
+struct bpf_prog_info {
+	__u32 type;
+	__u32 id;
+	__u8  tag[BPF_TAG_SIZE];
+	__u32 jited_prog_len;
+	__u32 xlated_prog_len;
+	__aligned_u64 jited_prog_insns;
+	__aligned_u64 xlated_prog_insns;
+	__u64 load_time;	/* ns since boottime */
+	__u32 created_by_uid;
+	__u32 nr_map_ids;
+	__aligned_u64 map_ids;
+	char name[BPF_OBJ_NAME_LEN];
+	__u8  name[BPF_OBJ_NAME_LEN];
+} __attribute__((aligned(8)));
+
+>>>>>>> f6271b091fda (BACKPORT: bpf: Add name, load_time, uid and map_ids to bpf_prog_info)
 struct bpf_map_info {
 	__u32 type;
 	__u32 id;
