@@ -249,8 +249,8 @@ union bpf_attr {
 		__u32	numa_node;	/* numa node (effective only if
 					 * BPF_F_NUMA_NODE is set).
 					 */
-		__u64 map_extra;
-		__u8	map_name[BPF_OBJ_NAME_LEN];
+        __u64 map_extra;
+        char    map_name[BPF_OBJ_NAME_LEN];
 	};
 
 	struct { /* anonymous struct used by BPF_MAP_*_ELEM commands */
@@ -264,24 +264,23 @@ union bpf_attr {
 	};
 
     struct { /* anonymous struct used by BPF_PROG_LOAD command */
-	    __u32		prog_type;	/* one of enum bpf_prog_type */
-	    __u32		insn_cnt;
-    	__aligned_u64	insns;
-	    __aligned_u64	license;
-	    __u32		log_level;	/* verbosity level of verifier */
-	    __u32		log_size;	/* size of user buffer */
-	    __aligned_u64	log_buf;	/* user supplied buffer */
-	    __u32		kern_version;	/* checked when prog_type=kprobe */
-	    __u32		prog_flags;
-	    char		prog_name[BPF_OBJ_NAME_LEN];
-    	__u32		prog_ifindex;	/* ifindex of netdev to prep for */
-	/* For some prog types expected attach type must be known at
-	 * load time to verify attach type specific parts of prog
-	 * (context accesses, allowed helpers, etc).
-	 */
-    	__u32		expected_attach_type;
-};
-
+        __u32        prog_type;    /* one of enum bpf_prog_type */
+        __u32        insn_cnt;
+        __aligned_u64    insns;
+        __aligned_u64    license;
+        __u32        log_level;    /* verbosity level of verifier */
+        __u32        log_size;    /* size of user buffer */
+        __aligned_u64    log_buf;    /* user supplied buffer */
+        __u32        kern_version;    /* checked when prog_type=kprobe */
+        __u32        prog_flags;
+        char        prog_name[BPF_OBJ_NAME_LEN];
+        __u32        prog_ifindex;    /* ifindex of netdev to prep for */
+    /* For some prog types expected attach type must be known at
+     * load time to verify attach type specific parts of prog
+     * (context accesses, allowed helpers, etc).
+     */
+        __u32        expected_attach_type;
+    };
 
 	struct { /* anonymous struct used by BPF_OBJ_* commands */
 		__aligned_u64	pathname;
@@ -1012,7 +1011,7 @@ struct bpf_prog_info {
 	__u32 created_by_uid;
 	__u32 nr_map_ids;
 	__aligned_u64 map_ids;
-	__u8  name[BPF_OBJ_NAME_LEN];
+	char name[BPF_OBJ_NAME_LEN];
 } __attribute__((aligned(8)));
 
 struct bpf_map_info {
@@ -1022,7 +1021,7 @@ struct bpf_map_info {
 	__u32 value_size;
 	__u32 max_entries;
 	__u32 map_flags;
-	__u8  name[BPF_OBJ_NAME_LEN];
+	char  name[BPF_OBJ_NAME_LEN];
 } __attribute__((aligned(8)));
 
 /* User bpf_sock_addr struct to access socket fields and sockaddr struct passed
