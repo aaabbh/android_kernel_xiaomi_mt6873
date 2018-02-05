@@ -2089,8 +2089,8 @@ enum hrtimer_restart tcp_pace_kick(struct hrtimer *timer);
 #define TCP_ULP_BUF_MAX		(TCP_ULP_NAME_MAX*TCP_ULP_MAX)
 
 enum {
-    TCP_ULP_TLS,
-    TCP_ULP_BPF,
+	TCP_ULP_TLS,
+	TCP_ULP_BPF,
 };
 
 struct tcp_ulp_ops {
