@@ -155,6 +155,36 @@ static struct tee_desc soter_desc = {
 
 static struct soter_priv *soter_priv;
 
+struct tee_device *isee_get_teedev(void)
+{
+	if (soter_priv != NULL)
+		return soter_priv->teedev;
+
+	IMSG_ERROR("[%s][%d] soter_priv is NULL!\n", __func__, __LINE__);
+	return NULL;
+}
+
+
+#ifndef TEEI_DTS_RESERVED_MEM
+static size_t teei_get_reserved_mem_size(void)
+{
+	unsigned long mem_size = 0;
+
+	mem_size = teei_secure_call(N_GET_RESERVED_MEM_SIZE, 0, 0, 0);
+
+	return (size_t)mem_size;
+}
+
+static phys_addr_t teei_get_reserved_mem_paddr(void)
+{
+	unsigned long phys_addr = 0;
+
+	phys_addr = teei_secure_call(N_GET_RESERVED_MEM_PADDR, 0, 0, 0);
+
+	return (phys_addr_t)phys_addr;
+}
+#endif
+
 static struct tee_shm_pool *
 soter_config_shm_memremap(void **memremaped_shm)
 {
@@ -219,12 +249,16 @@ static void soter_remove(struct soter_priv *soter)
 	kfree(soter);
 }
 
+extern int is_teei_boot(void);
 static int __init soter_driver_init(void)
 {
 	struct tee_shm_pool *pool = NULL;
 	struct tee_device *teedev = NULL;
 	void *memremaped_shm = NULL;
 	int rc;
+
+	if (is_teei_boot() == 0)
+		return 0;
 
 	soter_priv = kzalloc(sizeof(*soter_priv), GFP_KERNEL);
 	if (!soter_priv) {

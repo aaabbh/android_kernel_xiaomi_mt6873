@@ -28,6 +28,7 @@
 #include <linux/delay.h>
 #include <linux/platform_device.h>
 #include <linux/of_platform.h>
+#include <linux/init.h>
 
 #define TEEI_SWITCH_BIG_CORE
 
@@ -1062,6 +1063,25 @@ static struct platform_driver teei_driver = {
 	},
 };
 
+int is_teei_boot(void)
+{
+	char mode = 0;
+	char *ptr = strstr(saved_command_line, "androidboot.tee_type=");
+	if (ptr) {
+		mode = *(ptr + strlen("androidboot.tee_type="));
+		if (mode == '2') {
+			pr_info("is_teei_boot: yes\n");
+			return 1;
+		} else {
+			pr_info("is_teei_boot: no!\n");
+			return 0;
+		}
+	} else {
+		pr_info("is_teei_boot: can not find androidboot.tee_type, default yes\n");
+		return 1;
+	}
+}
+
 /**
  * @brief TEEI Agent Driver initialization
  * initialize service framework
@@ -1073,6 +1093,8 @@ static int teei_client_init(void)
 	struct device *class_dev = NULL;
 
 	struct sched_param param = {.sched_priority = 50 };
+	if (is_teei_boot() == 0)
+		return 0;
 
 	/* IMSG_DEBUG("TEEI Agent Driver Module Init ...\n"); */
 
