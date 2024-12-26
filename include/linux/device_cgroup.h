@@ -11,6 +11,15 @@
 #define DEVCG_DEV_CHAR  2
 #define DEVCG_DEV_ALL   4  /* this represents all devices */
 
+#define DEVCG_ACC_MKNOD 1
+#define DEVCG_ACC_READ  2
+#define DEVCG_ACC_WRITE 4
+#define DEVCG_ACC_MASK (DEVCG_ACC_MKNOD | DEVCG_ACC_READ | DEVCG_ACC_WRITE)
+
+#define DEVCG_DEV_BLOCK 1
+#define DEVCG_DEV_CHAR  2
+#define DEVCG_DEV_ALL   4  /* this represents all devices */
+
 #ifdef CONFIG_CGROUP_DEVICE
 extern int __devcgroup_check_permission(short type, u32 major, u32 minor,
 					short access);
