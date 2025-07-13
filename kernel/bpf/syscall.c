@@ -382,8 +382,7 @@ static int bpf_obj_name_cpy(char *dst, const char *src)
 
 	return 0;
 }
-
-#define BPF_PROG_LOAD_LAST_FIELD prog_name
+#define BPF_MAP_CREATE_LAST_FIELD map_extra
 
 /* called via syscall */
 static int map_create(union bpf_attr *attr)
@@ -1685,7 +1684,6 @@ static int bpf_prog_get_info_by_fd(struct bpf_prog *prog,
 	if (ulen) {
 
 		u32 __user *user_map_ids = u64_to_user_ptr(info.map_ids);
-		u32 *user_map_ids = (u32 *)info.map_ids;
 		u32 i;
 
 		for (i = 0; i < ulen; i++)
