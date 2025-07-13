@@ -384,6 +384,7 @@ static int bpf_obj_name_cpy(char *dst, const char *src)
 }
 
 #define BPF_PROG_LOAD_LAST_FIELD prog_name
+
 /* called via syscall */
 static int map_create(union bpf_attr *attr)
 {
@@ -1174,7 +1175,9 @@ static int bpf_prog_attach_check_attach_type(const struct bpf_prog *prog,
 }
 
 /* last field in 'union bpf_attr' used by this command */
+#define	BPF_PROG_LOAD_LAST_FIELD expected_attach_type
 #define	BPF_PROG_LOAD_LAST_FIELD prog_name
+
 static int bpf_prog_load(union bpf_attr *attr)
 {
 	enum bpf_prog_type type = attr->prog_type;
@@ -1680,11 +1683,9 @@ static int bpf_prog_get_info_by_fd(struct bpf_prog *prog,
 	info.nr_map_ids = prog->aux->used_map_cnt;
 	ulen = min_t(u32, info.nr_map_ids, ulen);
 	if (ulen) {
-<<<<<<< HEAD
+
 		u32 __user *user_map_ids = u64_to_user_ptr(info.map_ids);
-=======
 		u32 *user_map_ids = (u32 *)info.map_ids;
->>>>>>> a2b662dced04 (BACKPORT: bpf: Add name, load_time, uid and map_ids to bpf_prog_info)
 		u32 i;
 
 		for (i = 0; i < ulen; i++)
