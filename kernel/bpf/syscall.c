@@ -1174,8 +1174,9 @@ static int bpf_prog_attach_check_attach_type(const struct bpf_prog *prog,
 }
 
 /* last field in 'union bpf_attr' used by this command */
-#define	BPF_PROG_LOAD_LAST_FIELD expected_attach_type
-#define	BPF_PROG_LOAD_LAST_FIELD prog_name
+#ifndef BPF_PROG_LOAD_LAST_FIELD
+    #define BPF_PROG_LOAD_LAST_FIELD prog_name
+#endif
 
 static int bpf_prog_load(union bpf_attr *attr)
 {
