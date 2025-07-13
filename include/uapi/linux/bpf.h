@@ -224,6 +224,7 @@ enum bpf_attach_type {
 
 /* flags for BPF_PROG_QUERY */
 #define BPF_F_QUERY_EFFECTIVE	(1U << 0)
+
 #define BPF_OBJ_NAME_LEN 16U
 
 /* Flags for accessing BPF object */
@@ -259,24 +260,25 @@ union bpf_attr {
 		__u64		flags;
 	};
 
-	struct { /* anonymous struct used by BPF_PROG_LOAD command */
-		__u32		prog_type;	/* one of enum bpf_prog_type */
-		__u32		insn_cnt;
-		__aligned_u64	insns;
-		__aligned_u64	license;
-		__u32		log_level;	/* verbosity level of verifier */
-		__u32		log_size;	/* size of user buffer */
-		__aligned_u64	log_buf;	/* user supplied buffer */
-		__u32		kern_version;	/* checked when prog_type=kprobe */
-		__u32		prog_flags;
-        __u8		prog_name[BPF_OBJ_NAME_LEN];
-        __u32		prog_ifindex;	/* ifindex of netdev to prep for */
-       /* For some prog types expected attach type must be known at
-     * load time to verify attach type specific parts of prog
- * (context accesses, allowed helpers, etc).
- */
-        __u32		expected_attach_type;
-	};
+    struct { /* anonymous struct used by BPF_PROG_LOAD command */
+	    __u32		prog_type;	/* one of enum bpf_prog_type */
+	    __u32		insn_cnt;
+    	__aligned_u64	insns;
+	    __aligned_u64	license;
+	    __u32		log_level;	/* verbosity level of verifier */
+	    __u32		log_size;	/* size of user buffer */
+	    __aligned_u64	log_buf;	/* user supplied buffer */
+	    __u32		kern_version;	/* checked when prog_type=kprobe */
+	    __u32		prog_flags;
+	    char		prog_name[BPF_OBJ_NAME_LEN];
+    	__u32		prog_ifindex;	/* ifindex of netdev to prep for */
+	/* For some prog types expected attach type must be known at
+	 * load time to verify attach type specific parts of prog
+	 * (context accesses, allowed helpers, etc).
+	 */
+    	__u32		expected_attach_type;
+};
+
 
 	struct { /* anonymous struct used by BPF_OBJ_* commands */
 		__aligned_u64	pathname;
