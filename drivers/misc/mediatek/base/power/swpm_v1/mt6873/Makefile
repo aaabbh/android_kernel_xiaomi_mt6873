@@ -20,6 +20,8 @@ ccflags-y += \
 	-I$(srctree)/drivers/misc/mediatek/thermal/$(CONFIG_MTK_PLATFORM)/inc/mach/	\
 	-I$(srctree)/drivers/misc/mediatek/base/power/$(CONFIG_MTK_PLATFORM)/	\
 
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/gpu/
+
 ifeq ($(CONFIG_MTK_TINYSYS_SSPM_SUPPORT), y)
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/v2
