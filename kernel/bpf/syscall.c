@@ -377,14 +377,10 @@ static int bpf_obj_name_cpy(char *dst, const char *src)
 	if (src == end)
 		return -EINVAL;
 
-	/* '\0' terminates dst */
-	*dst = 0;
-
 	return 0;
 }
 
-#define BPF_MAP_CREATE_LAST_FIELD numa_node
-
+#define BPF_MAP_CREATE_LAST_FIELD map_name
 /* called via syscall */
 static int map_create(union bpf_attr *attr)
 {
@@ -826,9 +822,9 @@ err_put:
 	return err;
 }
 
-static const struct bpf_prog_ops * const bpf_prog_types[] = {
-#define BPF_PROG_TYPE(_id, _name) \
-	[_id] = & _name ## _prog_ops,
+static const struct bpf_verifier_ops * const bpf_prog_types[] = {
+#define BPF_PROG_TYPE(_id, _ops) \
+	[_id] = &_ops,
 #define BPF_MAP_TYPE(_id, _ops)
 #include <linux/bpf_types.h>
 #undef BPF_PROG_TYPE
@@ -1175,7 +1171,7 @@ static int bpf_prog_attach_check_attach_type(const struct bpf_prog *prog,
 }
 
 /* last field in 'union bpf_attr' used by this command */
-#define	BPF_PROG_LOAD_LAST_FIELD prog_name
+#define	BPF_PROG_LOAD_LAST_FIELD expected_attach_type
 
 static int bpf_prog_load(union bpf_attr *attr)
 {
@@ -1403,9 +1399,6 @@ static int bpf_prog_attach(const union bpf_attr *attr)
 	case BPF_CGROUP_SOCK_OPS:
 		ptype = BPF_PROG_TYPE_SOCK_OPS;
 		break;
-        case BPF_CGROUP_DEVICE:
-                ptype = BPF_PROG_TYPE_CGROUP_DEVICE;
-                break;
 	case BPF_SK_SKB_STREAM_PARSER:
 	case BPF_SK_SKB_STREAM_VERDICT:
 		return sockmap_get_from_fd(attr, true);
@@ -1471,9 +1464,6 @@ static int bpf_prog_detach(const union bpf_attr *attr)
 	case BPF_CGROUP_SOCK_OPS:
 		ptype = BPF_PROG_TYPE_SOCK_OPS;
 		break;
-        case BPF_CGROUP_DEVICE:
-                ptype = BPF_PROG_TYPE_CGROUP_DEVICE;
-                break;
 	case BPF_SK_SKB_STREAM_PARSER:
 	case BPF_SK_SKB_STREAM_VERDICT:
 		return sockmap_get_from_fd(attr, false);
@@ -1687,15 +1677,15 @@ static int bpf_prog_get_info_by_fd(struct bpf_prog *prog,
 	ulen = info.nr_map_ids;
 	info.nr_map_ids = prog->aux->used_map_cnt;
 	ulen = min_t(u32, info.nr_map_ids, ulen);
-    if (ulen) {
-    u32 __user *user_map_ids = u64_to_user_ptr(info.map_ids);
-    u32 i;
+	if (ulen) {
+		u32 __user *user_map_ids = u64_to_user_ptr(info.map_ids);
+		u32 i;
 
-    for (i = 0; i < ulen; i++)
-        if (put_user(prog->aux->used_maps[i]->id,
-                &user_map_ids[i]))
-            return -EFAULT;
-    }
+		for (i = 0; i < ulen; i++)
+			if (put_user(prog->aux->used_maps[i]->id,
+				     &user_map_ids[i]))
+				return -EFAULT;
+	}
 
 	if (!capable(CAP_SYS_ADMIN)) {
 		info.jited_prog_len = 0;
