@@ -11,6 +11,8 @@
 #include <linux/types.h>
 #include <linux/bpf_common.h>
 
+#define BPF_TAG_SIZE	8
+
 /* Extended instruction set based on top of classic BPF */
 
 /* instruction classes */
