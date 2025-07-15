@@ -133,7 +133,6 @@ enum bpf_prog_type {
 	BPF_PROG_TYPE_LWT_XMIT,
 	BPF_PROG_TYPE_SOCK_OPS,
 	BPF_PROG_TYPE_SK_SKB,
-	BPF_PROG_TYPE_CGROUP_DEVICE,
 	BPF_PROG_TYPE_CGROUP_SOCK_ADDR = 18,
 };
 
@@ -144,7 +143,6 @@ enum bpf_attach_type {
 	BPF_CGROUP_SOCK_OPS,
 	BPF_SK_SKB_STREAM_PARSER,
 	BPF_SK_SKB_STREAM_VERDICT,
-	BPF_CGROUP_DEVICE,
 	BPF_CGROUP_INET4_BIND = 8,
 	BPF_CGROUP_INET6_BIND = 9,
 	BPF_CGROUP_INET4_CONNECT,
@@ -249,8 +247,7 @@ union bpf_attr {
 		__u32	numa_node;	/* numa node (effective only if
 					 * BPF_F_NUMA_NODE is set).
 					 */
-        __u64 map_extra;
-        char    map_name[BPF_OBJ_NAME_LEN];
+		char	map_name[BPF_OBJ_NAME_LEN];
 	};
 
 	struct { /* anonymous struct used by BPF_MAP_*_ELEM commands */
@@ -263,20 +260,24 @@ union bpf_attr {
 		__u64		flags;
 	};
 
-    struct bpf_prog_info {
-	    __u32 type;
-	    __u32 id;
-    	__u8  tag[BPF_TAG_SIZE];
-      	__u32 jited_prog_len;
-	    __u32 xlated_prog_len;
-     	__aligned_u64 jited_prog_insns;
-     	__aligned_u64 xlated_prog_insns;
-     	__u64 load_time;	/* ns since boottime */
-    	__u32 created_by_uid;
-	    __u32 nr_map_ids;
-    	__aligned_u64 map_ids;
-    	char name[BPF_OBJ_NAME_LEN];
-    } __attribute__((aligned(8)));
+	struct { /* anonymous struct used by BPF_PROG_LOAD command */
+		__u32		prog_type;	/* one of enum bpf_prog_type */
+		__u32		insn_cnt;
+		__aligned_u64	insns;
+		__aligned_u64	license;
+		__u32		log_level;	/* verbosity level of verifier */
+		__u32		log_size;	/* size of user buffer */
+		__aligned_u64	log_buf;	/* user supplied buffer */
+		__u32		kern_version;	/* checked when prog_type=kprobe */
+		__u32		prog_flags;
+		char		prog_name[BPF_OBJ_NAME_LEN];
+		__u32		prog_ifindex;	/* ifindex of netdev to prep for */
+		/* For some prog types expected attach type must be known at
+		 * load time to verify attach type specific parts of prog
+		 * (context accesses, allowed helpers, etc).
+		 */
+		__u32		expected_attach_type;
+	};
 
 	struct { /* anonymous struct used by BPF_OBJ_* commands */
 		__aligned_u64	pathname;
@@ -691,13 +692,13 @@ union bpf_attr {
  * 	Return
  * 		0 on success, or a negative error in case of failure.
  *
-* int bpf_bind(ctx, addr, addr_len)
-*     Bind socket to address. Only binding to IP is supported, no port can be
-*     set in addr.
-*     @ctx: pointer to context of type bpf_sock_addr
-*     @addr: pointer to struct sockaddr to bind socket to
-*     @addr_len: length of sockaddr structure
-*     Return: 0 on success or negative error code
+ * int bpf_bind(ctx, addr, addr_len)
+ *     Bind socket to address. Only binding to IP is supported, no port can be
+ *     set in addr.
+ *     @ctx: pointer to context of type bpf_sock_addr
+ *     @addr: pointer to struct sockaddr to bind socket to
+ *     @addr_len: length of sockaddr structure
+ *     Return: 0 on success or negative error code
  */
 #define __BPF_FUNC_MAPPER(FN)		\
 	FN(unspec),			\
@@ -1091,18 +1092,5 @@ enum {
 
 #define TCP_BPF_IW		1001	/* Set TCP initial congestion window */
 #define TCP_BPF_SNDCWND_CLAMP	1002	/* Set sndcwnd_clamp */
-
-#define BPF_DEVCG_ACC_MKNOD    (1ULL << 0)
-#define BPF_DEVCG_ACC_READ     (1ULL << 1)
-#define BPF_DEVCG_ACC_WRITE    (1ULL << 2)
-
-#define BPF_DEVCG_DEV_BLOCK    (1ULL << 0)
-#define BPF_DEVCG_DEV_CHAR     (1ULL << 1)
-
-struct bpf_cgroup_dev_ctx {
-	__u32 access_type; /* (access << 16) | type */
-	__u32 major;
-	__u32 minor;
-};
 
 #endif /* _UAPI__LINUX_BPF_H__ */
