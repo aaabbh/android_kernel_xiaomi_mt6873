@@ -10,7 +10,14 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 
-ifeq ($(CONFIG_MICROTRUST_TEE_SUPPORT), y)
-$(info "CONFIG_MICROTRUST_TEE_VERSION=$(CONFIG_MICROTRUST_TEE_VERSION)")
-obj-y += $(subst ",,$(CONFIG_MICROTRUST_TEE_VERSION))/
+obj-y += tee.o
+tee-objs += tee_core.o
+tee-objs += tee_shm.o
+tee-objs += tee_shm_pool.o
+tee-objs += tee_client_api.o
+
+ifeq ($(CONFIG_MICROTRUST_TEST_DRIVERS),y)
+tee-objs += capi_proxy.o
 endif
+
+obj-y += soter/
