@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017, 2019-2021 Linaro Limited
+ * Copyright (c) 2015-2016, Linaro Limited
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -11,10 +11,10 @@
  * GNU General Public License for more details.
  *
  */
-#include <linux/anon_inodes.h>
 #include <linux/device.h>
+#include <linux/dma-buf.h>
+#include <linux/fdtable.h>
 #include <linux/idr.h>
-#include <linux/mm.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/tee_drv.h>
@@ -212,6 +212,10 @@ static struct tee_shm *__tee_shm_alloc(struct tee_context *ctx,
 	}
 
 	return shm;
+err_rem:
+	mutex_lock(&teedev->mutex);
+	idr_remove(&teedev->idr, shm->id);
+	mutex_unlock(&teedev->mutex);
 err_pool_free:
 	poolm->ops->free(poolm, shm);
 err_kfree:
@@ -468,11 +472,10 @@ int tee_shm_get_fd(struct tee_shm *shm)
 	if (!(shm->flags & TEE_SHM_DMA_BUF))
 		return -EINVAL;
 
-	/* matched by tee_shm_put() in tee_shm_op_release() */
-	refcount_inc(&shm->refcount);
-	fd = anon_inode_getfd("tee_shm", &tee_shm_fops, shm, O_RDWR);
+	get_dma_buf(shm->dmabuf);
+	fd = dma_buf_fd(shm->dmabuf, O_CLOEXEC);
 	if (fd < 0)
-		tee_shm_put(shm);
+		dma_buf_put(shm->dmabuf);
 	return fd;
 }
 
@@ -482,7 +485,17 @@ int tee_shm_get_fd(struct tee_shm *shm)
  */
 void tee_shm_free(struct tee_shm *shm)
 {
-	tee_shm_put(shm);
+	/*
+	 * dma_buf_put() decreases the dmabuf reference counter and will
+	 * call tee_shm_release() when the last reference is gone.
+	 *
+	 * In the case of driver private memory we call tee_shm_release
+	 * directly instead as it doesn't have a reference counter.
+	 */
+	if (shm->flags & TEE_SHM_DMA_BUF)
+		dma_buf_put(shm->dmabuf);
+	else
+		tee_shm_release(shm);
 }
 EXPORT_SYMBOL_GPL(tee_shm_free);
 
@@ -589,15 +602,10 @@ struct tee_shm *tee_shm_get_from_id(struct tee_context *ctx, int id)
 	teedev = ctx->teedev;
 	mutex_lock(&teedev->mutex);
 	shm = idr_find(&teedev->idr, id);
-	/*
-	 * If the tee_shm was found in the IDR it must have a refcount
-	 * larger than 0 due to the guarantee in tee_shm_put() below. So
-	 * it's safe to use refcount_inc().
-	 */
 	if (!shm || shm->ctx != ctx)
 		shm = ERR_PTR(-EINVAL);
-	else
-		refcount_inc(&shm->refcount);
+	else if (shm->flags & TEE_SHM_DMA_BUF)
+		get_dma_buf(shm->dmabuf);
 	mutex_unlock(&teedev->mutex);
 	return shm;
 }
@@ -609,24 +617,7 @@ EXPORT_SYMBOL_GPL(tee_shm_get_from_id);
  */
 void tee_shm_put(struct tee_shm *shm)
 {
-	struct tee_device *teedev = shm->teedev;
-	bool do_release = false;
-
-	mutex_lock(&teedev->mutex);
-	if (refcount_dec_and_test(&shm->refcount)) {
-		/*
-		 * refcount has reached 0, we must now remove it from the
-		 * IDR before releasing the mutex.  This will guarantee
-		 * that the refcount_inc() in tee_shm_get_from_id() never
-		 * starts from 0.
-		 */
-		if (shm->ctx)
-			list_del(&shm->link);
-		do_release = true;
-	}
-	mutex_unlock(&teedev->mutex);
-
-	if (do_release)
-		tee_shm_release(teedev, shm);
+	if (shm->flags & TEE_SHM_DMA_BUF)
+		dma_buf_put(shm->dmabuf);
 }
 EXPORT_SYMBOL_GPL(tee_shm_put);
