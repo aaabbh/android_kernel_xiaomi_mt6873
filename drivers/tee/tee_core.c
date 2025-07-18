@@ -14,12 +14,12 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <linux/tee_drv.h>
 #include <linux/cdev.h>
 #include <linux/fs.h>
 #include <linux/idr.h>
 #include <linux/module.h>
 #include <linux/slab.h>
-#include <linux/tee_drv.h>
 #include <linux/uaccess.h>
 #include "tee_private.h"
 
