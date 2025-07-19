@@ -14,6 +14,7 @@
 
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
+#include <uapi/linux/tee.h>
 #include <linux/tee_drv.h>
 #include <linux/cdev.h>
 #include <linux/fs.h>
